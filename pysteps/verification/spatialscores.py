@@ -141,7 +141,7 @@ def intensity_scale_accum(intscale, X_f, X_o):
     X_o : array_like
         Array of shape (n,m) containing the verification observation field.
     """
-    if len(X_f.shape) != 2 or len(X_o.shape) != 2 or X_f.shape != X_o.shape:
+    if (len(X_f.shape) != 2 and len(X_f.shape) != 3) or len(X_o.shape) != 2 or X_f.shape[-2:] != X_o.shape:
         message = "X_f and X_o must be two-dimensional arrays"
         message += " having the same shape, but "
         message += "X_f = %s and X_o = %s" % (str(X_f.shape), str(X_o.shape))
@@ -304,7 +304,7 @@ def fss(X_f, X_o, thr, scale):
     :cite:`RL2008`, :cite:`EWWM2013`
 
     """
-    if len(X_f.shape) != 2 or len(X_o.shape) != 2 or X_f.shape != X_o.shape:
+    if (len(X_f.shape) != 2 and len(X_f.shape) != 3) or len(X_o.shape) != 2 or X_f.shape[-2:] != X_o.shape:
         message = "X_f and X_o must be two-dimensional arrays"
         message += " having the same shape"
         raise ValueError(message)
@@ -321,7 +321,10 @@ def fss(X_f, X_o, thr, scale):
 
     # Compute fractions of pixels above the threshold within a square
     # neighboring area by applying a 2D moving average to the binary fields
-    S_f = uniform_filter(I_f, size=int(scale), mode="constant", cval=0.0)
+    if len(I_f.shape) == 2:
+        S_f = uniform_filter(I_f, size=int(scale), mode="constant", cval=0.0)
+    else:
+        S_f = np.mean([uniform_filter(I_f[i], size=int(scale), mode="constant", cval=0.0) for i in range(I_f.shape[0])], axis=0)
     S_o = uniform_filter(I_o, size=int(scale), mode="constant", cval=0.0)
 
     # Compute the numerator
